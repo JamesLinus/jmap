@@ -160,6 +160,17 @@ Mailboxes can be created, updated and destroyed using the *setMailboxes* method.
   A map of mailbox id to objects containing the properties to update for that Mailbox. If `null`, no objects will be updated.
 - **destroy**: `String[]|null`
   A list of ids for Mailboxes to permanently delete. If `null`, no objects will be deleted.
+- **onLastReferenceMoveTo**: `String|null`
+  A message must be in at least one mailbox at all times. Destroying mailboxes will remove any messages in them from that mailbox. If the message is not in any other mailboxes, it will be added to the mailbox with the id given by this argument, if not `null`. If `null`, the message will be destroyed.
+
+If the *onLastReferenceMoveTo* argument is not `null`, and any of:
+
+* The value is not a valid mailbox id; or
+* The user does not have permission to add messages to the mailbox; or
+* The id is also included in the *destroy* argument of the same *setMessages*
+  call
+
+then the whole method call MUST be rejected with an `invalidArguments` error.
 
 If a create, update or destroy is rejected, the appropriate error MUST be added to the notCreated/notUpdated/notDestroyed property of the response and the server MUST continue to the next create/update/destroy. It does not terminate the method.
 
@@ -221,7 +232,7 @@ If the mailbox has `mayDelete == false`, the destruction MUST be rejected with a
 
 A mailbox MUST NOT be destroyed if it still has any child mailboxes. Attempts to do so MUST be rejected with a `mailboxHasChild` error.
 
-A mailbox MUST NOT be destroyed if it has any messages assigned to it. Attempts to do so MUST be rejected with a `mailboxHasMessage` error.
+Before destroying the mailbox, all messages currently assigned to it must be removed from the mailbox. If a message is not in any other mailboxes, it MUST be added to the mailbox given by the *onLastReferenceMoveTo* argument, if given, otherwise destroyed.
 
 ### Response
 
